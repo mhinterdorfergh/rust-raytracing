@@ -1,3 +1,5 @@
+pub mod vec3;
+
 use std::{
     fs::OpenOptions,
     io::{BufWriter, Write},
