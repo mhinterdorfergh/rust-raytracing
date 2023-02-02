@@ -46,9 +46,9 @@ where
 {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut hit_record = None;
-        let closest_so_far = t_max;
-        for object in self.objects {
-            match object.hit(ray, t_min, closest_so_far) {
+        let mut closest_so_far = t_max;
+        for obj in self.objects.clone() {
+            match obj.hit(ray, t_min, closest_so_far) {
                 Some(record) => {
                     closest_so_far = record.t;
                     hit_record = Some(record)
