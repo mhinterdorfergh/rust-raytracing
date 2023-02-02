@@ -16,3 +16,10 @@ pub fn write_color(out: &mut BufWriter<File>, pixel_color: crate::vec3::Vec3) {
     )
     .expect("Could not write data");
 }
+
+pub const INFTY: f64 = f64::MAX;
+pub const PI: f64 = std::f64::consts::PI;
+
+pub fn degrees_to_radians(degrees: f64) -> f64 {
+    degrees * PI / 180.0
+}

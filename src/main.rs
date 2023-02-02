@@ -1,3 +1,5 @@
+pub mod hittable;
+pub mod objects;
 pub mod ray;
 pub mod util;
 pub mod vec3;
@@ -7,66 +9,22 @@ use std::{
     io::{BufWriter, Write},
 };
 
+use hittable::Hittable;
+use objects::sphere::Sphere;
+use util::INFTY;
 use vec3::Vec3;
 
-use crate::ray::Ray;
+use crate::{hittable::HittableList, ray::Ray};
 
-fn hit_sphere(center: Vec3, radius: f64, ray: &Ray) -> f64 {
-    /*
-     * solution from wikipedia
-     * equation to calculate intersection:
-     *  d²*(u.u)+2*d*[u.(o-c)]+(o-c).(o-c)-r²=0
-     *  where d is the distance between a point on a line and its origin
-     *        u is the direction of the line (ray)
-     *        o is the origin of the line (ray)
-     *        c is the center of the sphere
-     *        r is the radius of the sphere
-     * solving for d results in
-     * -[u.(o-c)]+-sqrt((u.(o-c))²-||u||²*(||o-c||²-r²))
-     * --------------------------------------------------
-     * ||u||²
-     *
-     * if d results in a value greater than zero, the ray intersects with the sphere
-     */
-
-    let u = Vec3::unit_vector(ray.direction);
-    let oc = ray.origin - center;
-    let oc_len = oc.length();
-
-    let discriminant = Vec3::dot(u, oc) * Vec3::dot(u, oc) - (oc_len * oc_len - radius * radius);
-    /*
-    how to calculate distance from hitting point to ray origin
-    let d_plus = -Vec3::dot(u, oc) + delta.sqrt();
-    let d_minus = -Vec3::dot(u, oc) - delta.sqrt();
-    d_plus > 0.0 || d_minus > 0.0 */
-
-    if discriminant <= 0.0 {
-        -1.0
-    } else {
-        let a = Vec3::dot(ray.direction, ray.direction); // u * u -> ray direction
-        let b = 2.0 * Vec3::dot(oc, ray.direction);
-        (-b - discriminant.sqrt()) / (2.0 * a)
+fn ray_color(ray: &Ray, world: &hittable::HittableList<Sphere>) -> Vec3 {
+    match world.hit(&ray, 0.0, INFTY) {
+        Some(record) => 0.5 * (record.normal + Vec3::new(1.0, 1.0, 1.0)),
+        None => {
+            let unit_direction = Vec3::unit_vector(ray.direction);
+            let t = 0.5 * (unit_direction.y + 1.0);
+            (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
+        }
     }
-
-    /*
-    solution from book
-    let vec_origin_center = ray.origin - center; // calculate vector between point and circle center
-    let direction_len = Vec3::dot(ray.direction, ray.direction); // u * u -> ray direction
-    let b = 2.0 * Vec3::dot(vec_origin_center, ray.direction);
-    let c = Vec3::dot(vec_origin_center, vec_origin_center) - radius * radius;
-    let discriminant = b * b - 4.0 * direction_len * c;
-    discriminant > 0.0 */
-}
-
-fn ray_color(ray: ray::Ray) -> Vec3 {
-    let mut t = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, &ray);
-    if t > 0.0 {
-        let n = Vec3::unit_vector(ray.at(t) - Vec3::new(0.0, 0.0, -1.0));
-        return 0.5 * Vec3::new(n.x + 1.0, n.y + 1.0, n.z + 1.0);
-    }
-    let unit_direction = Vec3::unit_vector(ray.direction);
-    t = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
@@ -126,6 +84,20 @@ fn main() {
 
     log::debug!("wrote header");
 
+    let mut world = HittableList { objects: vec![] };
+
+    let sphere = Sphere {
+        center: Vec3::new(0.0, 0.0, -1.0),
+        radius: 0.5,
+    };
+    let sphere2 = Sphere {
+        center: Vec3::new(0.0, -100.5, -1.0),
+        radius: 100.0,
+    };
+
+    world.add(sphere2);
+    world.add(sphere);
+
     // draw line by line from top to bottom
     for j in (0..image_height).rev() {
         // from left to right
@@ -137,7 +109,7 @@ fn main() {
                 origin,
                 lower_left_corner + u * horizontal + v * vertical - origin,
             );
-            let pixel = ray_color(r);
+            let pixel = ray_color(&r, &world);
 
             util::write_color(&mut writer, pixel);
 
