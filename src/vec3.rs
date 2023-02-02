@@ -1,17 +1,17 @@
 use std::ops;
 
 #[derive(Debug, Clone, Copy)]
-struct Vec3 {
-    x: f64,
-    y: f64,
-    z: f64,
+pub struct Vec3 {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 #[derive(Debug, Clone)]
 struct IndexError;
 
 impl Vec3 {
-    fn new(e1: f64, e2: f64, e3: f64) -> Vec3 {
+    pub fn new(e1: f64, e2: f64, e3: f64) -> Vec3 {
         Vec3 {
             x: e1,
             y: e2,
