@@ -31,11 +31,11 @@ impl<T> HittableList<T>
 where
     T: Hittable,
 {
-    fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.objects.clear()
     }
 
-    fn add(&mut self, object: T) {
+    pub fn add(&mut self, object: T) {
         self.objects.push(object.clone())
     }
 }

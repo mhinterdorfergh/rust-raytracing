@@ -11,16 +11,14 @@ use std::{
 
 use hittable::Hittable;
 use objects::sphere::Sphere;
+use util::INFTY;
 use vec3::Vec3;
 
-use crate::ray::Ray;
+use crate::{hittable::HittableList, ray::Ray};
 
-fn ray_color(ray: &Ray, sphere: &Sphere) -> Vec3 {
-    match sphere.hit(&ray, 0.0, 1000.0) {
-        Some(record) => {
-            let n = Vec3::unit_vector(ray.at(record.t) - Vec3::new(0.0, 0.0, -1.0));
-            0.5 * Vec3::new(n.x + 1.0, n.y + 1.0, n.z + 1.0)
-        }
+fn ray_color(ray: &Ray, world: &hittable::HittableList<Sphere>) -> Vec3 {
+    match world.hit(&ray, 0.0, INFTY) {
+        Some(record) => 0.5 * (record.normal + Vec3::new(1.0, 1.0, 1.0)),
         None => {
             let unit_direction = Vec3::unit_vector(ray.direction);
             let t = 0.5 * (unit_direction.y + 1.0);
@@ -86,10 +84,19 @@ fn main() {
 
     log::debug!("wrote header");
 
+    let mut world = HittableList { objects: vec![] };
+
     let sphere = Sphere {
         center: Vec3::new(0.0, 0.0, -1.0),
         radius: 0.5,
     };
+    let sphere2 = Sphere {
+        center: Vec3::new(0.0, -100.5, -1.0),
+        radius: 100.0,
+    };
+
+    world.add(sphere2);
+    world.add(sphere);
 
     // draw line by line from top to bottom
     for j in (0..image_height).rev() {
@@ -102,7 +109,7 @@ fn main() {
                 origin,
                 lower_left_corner + u * horizontal + v * vertical - origin,
             );
-            let pixel = ray_color(&r, &sphere);
+            let pixel = ray_color(&r, &world);
 
             util::write_color(&mut writer, pixel);
 
