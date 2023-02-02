@@ -1,3 +1,5 @@
+pub mod hittable;
+pub mod objects;
 pub mod ray;
 pub mod util;
 pub mod vec3;
