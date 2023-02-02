@@ -1,5 +1,6 @@
 use std::ops;
 
+#[derive(Debug, Clone, Copy)]
 struct Vec3 {
     x: f64,
     y: f64,
@@ -33,6 +34,22 @@ impl Vec3 {
     fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
+
+    fn dot(u: Vec3, v: Vec3) -> f64 {
+        u.x * v.x + u.y * v.y + u.z * v.z
+    }
+
+    fn cross(u: Vec3, v: Vec3) -> Vec3 {
+        Vec3 {
+            x: (u.y * v.z - u.z * v.y),
+            y: (u.z * v.x - u.x * v.z),
+            z: (u.x * v.y - u.y * v.x),
+        }
+    }
+
+    fn unit_vector(v: Vec3) -> Vec3 {
+        v / v.length()
+    }
 }
 
 impl Default for Vec3 {
@@ -64,5 +81,71 @@ impl ops::MulAssign<f64> for Vec3 {
 impl ops::DivAssign<f64> for Vec3 {
     fn div_assign(&mut self, rhs: f64) {
         *self *= 1.0 / rhs
+    }
+}
+
+impl ops::Add<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn add(self, other: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+impl ops::Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+}
+
+impl ops::Sub<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn sub(self, other: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
+}
+
+impl ops::Mul<f64> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: f64) -> Self::Output {
+        Vec3 {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+        }
+    }
+}
+impl ops::Mul<Vec3> for f64 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Self::Output {
+        Vec3 {
+            x: other.x * self,
+            y: other.y * self,
+            z: other.z * self,
+        }
+    }
+}
+
+impl ops::Div<f64> for Vec3 {
+    type Output = Vec3;
+
+    fn div(self, other: f64) -> Self::Output {
+        (1.0 / other) * self
     }
 }
