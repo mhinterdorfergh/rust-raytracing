@@ -1,9 +1,9 @@
+pub mod camera;
 pub mod hittable;
 pub mod objects;
 pub mod ray;
 pub mod util;
 pub mod vec3;
-
 use std::{
     fs::OpenOptions,
     io::{BufWriter, Write},
@@ -11,7 +11,7 @@ use std::{
 
 use hittable::Hittable;
 use objects::sphere::Sphere;
-use util::INFTY;
+use util::{random_double, write_color, INFTY};
 use vec3::Vec3;
 
 use crate::{hittable::HittableList, ray::Ray};
@@ -52,20 +52,12 @@ fn main() {
 
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width: i32 = 400;
+    let image_width: i32 = 3840;
     let image_height: i32 = ((image_width as f64) / aspect_ratio).round() as i32;
+    let samples_per_pixel: u32 = 100;
 
     // Camera
-    let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Vec3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
-
+    let camera = camera::Camera::new();
     // print header
     writer
         .write_all(
@@ -81,8 +73,6 @@ fn main() {
             .as_bytes(),
         )
         .expect("Unable to write data");
-
-    log::debug!("wrote header");
 
     let mut world = HittableList { objects: vec![] };
 
@@ -102,22 +92,16 @@ fn main() {
     for j in (0..image_height).rev() {
         // from left to right
         for i in 0..image_width {
-            let u = (i as f64) / ((image_width - 1) as f64);
-            let v = (j as f64) / ((image_height - 1) as f64);
+            let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
+            for _ in 0..samples_per_pixel {
+                let u = ((i as f64) + util::rand()) / ((image_width - 1) as f64);
+                let v = ((j as f64) + util::rand()) / ((image_height - 1) as f64);
 
-            let r = Ray::new(
-                origin,
-                lower_left_corner + u * horizontal + v * vertical - origin,
-            );
-            let pixel = ray_color(&r, &world);
+                let ray = camera.shoot_ray(u, v);
 
-            util::write_color(&mut writer, pixel);
-
-            log::debug!(
-                "wrote data {} / {}",
-                (image_height - j - 1) * image_width + i + 1,
-                image_height * image_width
-            );
+                pixel_color += ray_color(&ray, &world);
+            }
+            write_color(&mut writer, pixel_color, samples_per_pixel);
         }
     }
 }
