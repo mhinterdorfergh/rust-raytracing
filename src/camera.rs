@@ -1,14 +1,14 @@
-use crate::vec3::Vec3;
+use crate::{ray::Ray, vec3::Vec3};
 
 pub struct Camera {
     pub origin: Vec3,
     pub lower_left_corner: Vec3,
     pub horizontal: Vec3,
-    pub verticcal: Vec3,
+    pub vertical: Vec3,
 }
 
 impl Camera {
-    fn new() -> Camera {
+    pub fn new() -> Camera {
         let aspect_ratio = 16.0 / 9.0;
         let viewport_height = 2.0;
         let viewport_width = aspect_ratio * viewport_height;
@@ -24,7 +24,14 @@ impl Camera {
             origin: origin,
             lower_left_corner: lower_left_corner,
             horizontal: horizontal,
-            verticcal: vertical,
+            vertical,
         }
+    }
+
+    pub fn shoot_ray(&self, u: f64, v: f64) -> Ray {
+        Ray::new(
+            self.origin,
+            self.lower_left_corner + u * self.horizontal + v * self.vertical - self.origin,
+        )
     }
 }
