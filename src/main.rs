@@ -10,15 +10,29 @@ use std::{
 };
 
 use hittable::Hittable;
+use log::debug;
 use objects::sphere::Sphere;
-use util::{random_double, write_color, INFTY};
+use util::{write_color, INFTY};
 use vec3::Vec3;
 
 use crate::{hittable::HittableList, ray::Ray};
 
-fn ray_color(ray: &Ray, world: &hittable::HittableList<Sphere>) -> Vec3 {
-    match world.hit(&ray, 0.0, INFTY) {
-        Some(record) => 0.5 * (record.normal + Vec3::new(1.0, 1.0, 1.0)),
+fn ray_color(ray: &Ray, world: &hittable::HittableList<Sphere>, depth: u32) -> Vec3 {
+    if depth <= 0 {
+        return Vec3::new(0.0, 0.0, 0.0);
+    }
+
+    match world.hit(&ray, 0.001, INFTY) {
+        Some(record) => {
+            // let target = record.point + record.normal + Vec3::random_unit_vector();
+            // let target = record.point + record.normal + Vec3::random_in_unit_sphere();
+            let target = record.point + record.normal + Vec3::random_in_hemisphere(record.normal);
+            0.5 * ray_color(
+                &Ray::new(record.point, target - record.point),
+                world,
+                depth - 1,
+            )
+        }
         None => {
             let unit_direction = Vec3::unit_vector(ray.direction);
             let t = 0.5 * (unit_direction.y + 1.0);
@@ -94,14 +108,21 @@ fn main() {
         for i in 0..image_width {
             let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
             for _ in 0..samples_per_pixel {
-                let u = ((i as f64) + util::rand()) / ((image_width - 1) as f64);
-                let v = ((j as f64) + util::rand()) / ((image_height - 1) as f64);
+                let u = ((i as f64) + util::random()) / ((image_width - 1) as f64);
+                let v = ((j as f64) + util::random()) / ((image_height - 1) as f64);
 
                 let ray = camera.shoot_ray(u, v);
 
-                pixel_color += ray_color(&ray, &world);
+                pixel_color += ray_color(&ray, &world, 50);
             }
             write_color(&mut writer, pixel_color, samples_per_pixel);
         }
+        debug!(
+            "calculated pixels {}/{} {}%",
+            (image_height - j + 1) * image_width,
+            image_height * image_width,
+            (((image_height - j + 1) * image_width) as f64) / ((image_height * image_width) as f64)
+                * 100.0
+        );
     }
 }

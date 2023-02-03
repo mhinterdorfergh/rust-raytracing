@@ -1,7 +1,4 @@
-use std::{
-    fs::File,
-    io::{BufWriter, Write},
-};
+use std::io::{BufWriter, Write};
 
 use rand::Rng;
 
@@ -12,9 +9,9 @@ pub fn write_color<W: Write>(
 ) {
     let scale = 1.0 / (samples_per_pixel as f64);
 
-    let r = pixel_color.x * scale;
-    let g = pixel_color.y * scale;
-    let b = pixel_color.z * scale;
+    let r = (pixel_color.x * scale).sqrt();
+    let g = (pixel_color.y * scale).sqrt();
+    let b = (pixel_color.z * scale).sqrt();
 
     out.write_all(
         format!(
@@ -35,13 +32,13 @@ pub fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * PI / 180.0
 }
 
-pub fn rand() -> f64 {
+pub fn random() -> f64 {
     let mut rng = rand::thread_rng();
     rng.gen_range(0.0..1.0)
 }
 
-pub fn random_double(min: f64, max: f64) -> f64 {
-    min + (max - min) * rand()
+pub fn random_range(min: f64, max: f64) -> f64 {
+    min + (max - min) * random()
 }
 
 pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
