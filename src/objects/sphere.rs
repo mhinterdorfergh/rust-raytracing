@@ -1,16 +1,17 @@
 use crate::{
     hittable::{HitRecord, Hittable},
+    material::Material,
     ray::Ray,
     vec3::Vec3,
 };
 
-#[derive(Debug, Clone)]
-pub struct Sphere {
+pub struct Sphere<M: Material> {
     pub center: Vec3,
     pub radius: f64,
+    pub material: M,
 }
 
-impl Hittable for Sphere {
+impl<M: Material> Hittable for Sphere<M> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
@@ -42,6 +43,7 @@ impl Hittable for Sphere {
             point: ray.at(root),
             normal: (ray.at(root) - self.center) / self.radius,
             front_face: false,
+            material: &self.material,
         };
         record.set_face_normal(ray, outward_normal);
         Some(record)
