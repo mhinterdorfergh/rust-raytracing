@@ -93,6 +93,10 @@ impl Vec3 {
         const s: f64 = 1e-8;
         (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
     }
+
+    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+        v - 2.0 * Self::dot(v, n) * n
+    }
 }
 
 impl Default for Vec3 {

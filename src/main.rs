@@ -1,5 +1,7 @@
 pub mod camera;
 pub mod hittable;
+pub mod material;
+pub mod materials;
 pub mod objects;
 pub mod ray;
 pub mod util;
@@ -11,28 +13,24 @@ use std::{
 
 use hittable::Hittable;
 use log::debug;
+
+use materials::{lambertian::Lambertian, metal::Metal};
 use objects::sphere::Sphere;
 use util::{write_color, INFTY};
 use vec3::Vec3;
 
 use crate::{hittable::HittableList, ray::Ray};
 
-fn ray_color(ray: &Ray, world: &hittable::HittableList<Sphere>, depth: u32) -> Vec3 {
+fn ray_color(ray: &Ray, world: &hittable::HittableList, depth: u32) -> Vec3 {
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
 
     match world.hit(&ray, 0.001, INFTY) {
-        Some(record) => {
-            // let target = record.point + record.normal + Vec3::random_unit_vector();
-            // let target = record.point + record.normal + Vec3::random_in_unit_sphere();
-            let target = record.point + record.normal + Vec3::random_in_hemisphere(record.normal);
-            0.5 * ray_color(
-                &Ray::new(record.point, target - record.point),
-                world,
-                depth - 1,
-            )
-        }
+        Some(record) => match record.material.scatter(ray, record) {
+            Some((color, scattered_ray)) => color * ray_color(&scattered_ray, world, depth - 1),
+            None => Vec3::new(0.0, 0.0, 0.0),
+        },
         None => {
             let unit_direction = Vec3::unit_vector(ray.direction);
             let t = 0.5 * (unit_direction.y + 1.0);
@@ -66,9 +64,10 @@ fn main() {
 
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width: i32 = 3840;
+    let image_width: i32 = 400;
     let image_height: i32 = ((image_width as f64) / aspect_ratio).round() as i32;
     let samples_per_pixel: u32 = 100;
+    let max_bounce: u32 = 50;
 
     // Camera
     let camera = camera::Camera::new();
@@ -90,17 +89,42 @@ fn main() {
 
     let mut world = HittableList { objects: vec![] };
 
-    let sphere = Sphere {
-        center: Vec3::new(0.0, 0.0, -1.0),
-        radius: 0.5,
-    };
-    let sphere2 = Sphere {
+    let sphere_ground = Sphere {
         center: Vec3::new(0.0, -100.5, -1.0),
         radius: 100.0,
+        material: Lambertian {
+            color: Vec3::new(0.8, 0.8, 0.0),
+        },
     };
 
-    world.add(sphere2);
-    world.add(sphere);
+    let sphere_center = Sphere {
+        center: Vec3::new(0.0, 0.0, -1.0),
+        radius: 0.5,
+        material: Lambertian {
+            color: Vec3::new(0.7, 0.3, 0.3),
+        },
+    };
+
+    let sphere_left = Sphere {
+        center: Vec3::new(-1.0, 0.0, -1.0),
+        radius: 0.5,
+        material: Metal {
+            color: Vec3::new(0.8, 0.8, 0.8),
+        },
+    };
+
+    let sphere_right = Sphere {
+        center: Vec3::new(1.0, 0.0, -1.0),
+        radius: 0.5,
+        material: Metal {
+            color: Vec3::new(0.8, 0.6, 0.2),
+        },
+    };
+
+    world.add(sphere_ground);
+    world.add(sphere_center);
+    world.add(sphere_left);
+    world.add(sphere_right);
 
     // draw line by line from top to bottom
     for j in (0..image_height).rev() {
@@ -113,7 +137,7 @@ fn main() {
 
                 let ray = camera.shoot_ray(u, v);
 
-                pixel_color += ray_color(&ray, &world, 50);
+                pixel_color += ray_color(&ray, &world, max_bounce);
             }
             write_color(&mut writer, pixel_color, samples_per_pixel);
         }
