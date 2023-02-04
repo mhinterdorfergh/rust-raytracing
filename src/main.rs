@@ -110,6 +110,7 @@ fn main() {
         radius: 0.5,
         material: Metal {
             color: Vec3::new(0.8, 0.8, 0.8),
+            fuzz: 0.3,
         },
     };
 
@@ -118,6 +119,7 @@ fn main() {
         radius: 0.5,
         material: Metal {
             color: Vec3::new(0.8, 0.6, 0.2),
+            fuzz: 1.0,
         },
     };
 
