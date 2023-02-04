@@ -14,7 +14,7 @@ use std::{
 use hittable::Hittable;
 use log::debug;
 
-use materials::{lambertian::Lambertian, metal::Metal};
+use materials::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 use objects::sphere::Sphere;
 use util::{write_color, INFTY};
 use vec3::Vec3;
@@ -101,16 +101,22 @@ fn main() {
         center: Vec3::new(0.0, 0.0, -1.0),
         radius: 0.5,
         material: Lambertian {
-            color: Vec3::new(0.7, 0.3, 0.3),
+            color: Vec3::new(0.1, 0.2, 0.5),
         },
     };
 
     let sphere_left = Sphere {
         center: Vec3::new(-1.0, 0.0, -1.0),
         radius: 0.5,
-        material: Metal {
-            color: Vec3::new(0.8, 0.8, 0.8),
-            fuzz: 0.3,
+        material: Dielectric {
+            index_of_refraction: 1.5,
+        },
+    };
+    let sphere_hollow = Sphere {
+        center: Vec3::new(-1.0, 0.0, -1.0),
+        radius: -0.4,
+        material: Dielectric {
+            index_of_refraction: 1.5,
         },
     };
 
@@ -119,7 +125,7 @@ fn main() {
         radius: 0.5,
         material: Metal {
             color: Vec3::new(0.8, 0.6, 0.2),
-            fuzz: 1.0,
+            fuzz: 0.0,
         },
     };
 
@@ -127,6 +133,7 @@ fn main() {
     world.add(sphere_center);
     world.add(sphere_left);
     world.add(sphere_right);
+    world.add(sphere_hollow);
 
     // draw line by line from top to bottom
     for j in (0..image_height).rev() {
