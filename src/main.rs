@@ -70,7 +70,13 @@ fn main() {
     let max_bounce: u32 = 50;
 
     // Camera
-    let camera = camera::Camera::new();
+    let camera = camera::Camera::new(
+        90.0,
+        aspect_ratio,
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+    );
     // print header
     writer
         .write_all(
@@ -114,7 +120,7 @@ fn main() {
     };
     let sphere_hollow = Sphere {
         center: Vec3::new(-1.0, 0.0, -1.0),
-        radius: -0.4,
+        radius: -0.45,
         material: Dielectric {
             index_of_refraction: 1.5,
         },
