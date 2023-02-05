@@ -1,4 +1,4 @@
-use std::ops;
+use std::{iter::Sum, ops};
 
 use crate::util::{self, random, random_range};
 

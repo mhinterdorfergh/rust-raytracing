@@ -17,6 +17,7 @@ use log::debug;
 use material::Material;
 use materials::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 use objects::sphere::Sphere;
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use util::{write_color, INFTY};
 use vec3::Vec3;
 
@@ -161,9 +162,9 @@ fn main() {
 
     // Image
     let aspect_ratio = 3.0 / 2.0;
-    let image_width: i32 = 1200;
-    let image_height: i32 = ((image_width as f64) / aspect_ratio).round() as i32;
-    let samples_per_pixel: u32 = 500;
+    let image_width: u32 = 1200;
+    let image_height: u32 = ((image_width as f64) / aspect_ratio).round() as u32;
+    let samples_per_pixel: u32 = 100;
     let max_bounce: u32 = 50;
 
     // Camera
@@ -185,7 +186,6 @@ fn main() {
 
     // world
     let world = random_scene();
-
     // print header
     writer
         .write_all(
@@ -202,27 +202,37 @@ fn main() {
         )
         .expect("Unable to write data");
 
-    // draw line by line from top to bottom
-    for j in (0..image_height).rev() {
-        // from left to right
-        for i in 0..image_width {
-            let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
-            for _ in 0..samples_per_pixel {
+    let calc_count = image_height * image_width;
+
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(6)
+        .build_global()
+        .expect("Could not create threadpool");
+
+    let pixels: Vec<Vec3> = (0..calc_count)
+        .into_par_iter()
+        .into_par_iter()
+        .map(|x| {
+            let i = (x) % image_width;
+            let j = image_height - ((x - i) / image_width);
+            let mut samples: Vec<Vec3> = vec![];
+
+            (0..samples_per_pixel).into_iter().for_each(|s| {
                 let u = ((i as f64) + util::random()) / ((image_width - 1) as f64);
                 let v = ((j as f64) + util::random()) / ((image_height - 1) as f64);
 
                 let ray = camera.shoot_ray(u, v);
 
-                pixel_color += ray_color(&ray, &world, max_bounce);
-            }
-            write_color(&mut writer, pixel_color, samples_per_pixel);
-        }
-        debug!(
-            "calculated pixels {}/{} {}%",
-            (image_height - j + 1) * image_width,
-            image_height * image_width,
-            (((image_height - j + 1) * image_width) as f64) / ((image_height * image_width) as f64)
-                * 100.0
-        );
-    }
+                samples.push(ray_color(&ray, &world, max_bounce));
+            });
+
+            samples
+                .into_par_iter()
+                .reduce(|| Vec3::default(), |a, b| a + b)
+        })
+        .collect();
+
+    pixels
+        .into_iter()
+        .for_each(|p| write_color(&mut writer, p, samples_per_pixel))
 }
