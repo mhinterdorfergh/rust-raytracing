@@ -14,6 +14,7 @@ use std::{
 use hittable::Hittable;
 use log::debug;
 
+use material::Material;
 use materials::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 use objects::sphere::Sphere;
 use util::{write_color, INFTY};
@@ -37,6 +38,102 @@ fn ray_color(ray: &Ray, world: &hittable::HittableList, depth: u32) -> Vec3 {
             (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
         }
     }
+}
+
+fn random_scene<'a>() -> HittableList {
+    let mut world: HittableList = Default::default();
+
+    let ground_material = Lambertian {
+        color: Vec3 {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        },
+    };
+    world.add(Sphere {
+        center: Vec3 {
+            x: 0.0,
+            y: -1000.0,
+            z: 0.0,
+        },
+        material: Box::new(ground_material),
+        radius: 1000.0,
+    });
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = util::random();
+            let center = Vec3::new(
+                (a as f64) + 0.9 * util::random(),
+                0.2,
+                (b as f64) + 0.9 * util::random(),
+            );
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                let material: Box<dyn Material> = if choose_mat < 0.8 {
+                    Box::new(Lambertian {
+                        color: Vec3::random() * Vec3::random(),
+                    })
+                } else if choose_mat < 0.95 {
+                    Box::new(Metal {
+                        color: Vec3::random_range(0.5, 1.0),
+                        fuzz: util::random_range(0.0, 0.5),
+                    })
+                } else {
+                    Box::new(Dielectric {
+                        index_of_refraction: 1.5,
+                    })
+                };
+                world.add(Sphere {
+                    center,
+                    radius: 0.2,
+                    material: material,
+                });
+            }
+        }
+    }
+    world.add(Sphere {
+        center: Vec3 {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        material: Box::new(Dielectric {
+            index_of_refraction: 1.5,
+        }),
+        radius: 1.0,
+    });
+    world.add(Sphere {
+        center: Vec3 {
+            x: -4.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        material: Box::new(Lambertian {
+            color: Vec3 {
+                x: 0.4,
+                y: 0.2,
+                z: 0.1,
+            },
+        }),
+        radius: 1.0,
+    });
+    world.add(Sphere {
+        center: Vec3 {
+            x: 4.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        material: Box::new(Metal {
+            color: Vec3 {
+                x: 0.7,
+                y: 0.6,
+                z: 0.5,
+            },
+            fuzz: 0.0,
+        }),
+        radius: 1.0,
+    });
+    world
 }
 
 fn main() {
@@ -63,18 +160,18 @@ fn main() {
     env_logger::init();
 
     // Image
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width: i32 = 400;
+    let aspect_ratio = 3.0 / 2.0;
+    let image_width: i32 = 1200;
     let image_height: i32 = ((image_width as f64) / aspect_ratio).round() as i32;
-    let samples_per_pixel: u32 = 100;
+    let samples_per_pixel: u32 = 500;
     let max_bounce: u32 = 50;
 
     // Camera
-    let lookfrom = Vec3::new(3.0, 3.0, 2.0);
-    let lookat = Vec3::new(0.0, 0.0, -1.0);
+    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
-    let dist_to_focus = (lookfrom - lookat).length();
-    let aperture = 2.0;
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
 
     let camera = camera::Camera::new(
         lookfrom,
@@ -85,6 +182,10 @@ fn main() {
         aperture,
         dist_to_focus,
     );
+
+    // world
+    let world = random_scene();
+
     // print header
     writer
         .write_all(
@@ -100,54 +201,6 @@ fn main() {
             .as_bytes(),
         )
         .expect("Unable to write data");
-
-    let mut world = HittableList { objects: vec![] };
-
-    let sphere_ground = Sphere {
-        center: Vec3::new(0.0, -100.5, -1.0),
-        radius: 100.0,
-        material: Lambertian {
-            color: Vec3::new(0.8, 0.8, 0.0),
-        },
-    };
-
-    let sphere_center = Sphere {
-        center: Vec3::new(0.0, 0.0, -1.0),
-        radius: 0.5,
-        material: Lambertian {
-            color: Vec3::new(0.1, 0.2, 0.5),
-        },
-    };
-
-    let sphere_left = Sphere {
-        center: Vec3::new(-1.0, 0.0, -1.0),
-        radius: 0.5,
-        material: Dielectric {
-            index_of_refraction: 1.5,
-        },
-    };
-    let sphere_hollow = Sphere {
-        center: Vec3::new(-1.0, 0.0, -1.0),
-        radius: -0.45,
-        material: Dielectric {
-            index_of_refraction: 1.5,
-        },
-    };
-
-    let sphere_right = Sphere {
-        center: Vec3::new(1.0, 0.0, -1.0),
-        radius: 0.5,
-        material: Metal {
-            color: Vec3::new(0.8, 0.6, 0.2),
-            fuzz: 0.0,
-        },
-    };
-
-    world.add(sphere_ground);
-    world.add(sphere_center);
-    world.add(sphere_left);
-    world.add(sphere_right);
-    world.add(sphere_hollow);
 
     // draw line by line from top to bottom
     for j in (0..image_height).rev() {

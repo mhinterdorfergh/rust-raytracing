@@ -5,13 +5,13 @@ use crate::{
     vec3::Vec3,
 };
 
-pub struct Sphere<M: Material> {
+pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
-    pub material: M,
+    pub material: Box<dyn Material>,
 }
 
-impl<M: Material> Hittable for Sphere<M> {
+impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
