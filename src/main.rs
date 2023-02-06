@@ -12,7 +12,6 @@ use std::{
 };
 
 use hittable::Hittable;
-use log::debug;
 
 use material::Material;
 use materials::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
@@ -164,8 +163,8 @@ fn main() {
     let aspect_ratio = 3.0 / 2.0;
     let image_width: u32 = 1200;
     let image_height: u32 = ((image_width as f64) / aspect_ratio).round() as u32;
-    let samples_per_pixel: u32 = 100;
-    let max_bounce: u32 = 50;
+    let samples_per_pixel: u32 = 1000;
+    let max_bounce: u32 = 12;
 
     // Camera
     let lookfrom = Vec3::new(13.0, 2.0, 3.0);
@@ -204,20 +203,19 @@ fn main() {
 
     let calc_count = image_height * image_width;
 
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(6)
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(12)
         .build_global()
         .expect("Could not create threadpool");
 
     let pixels: Vec<Vec3> = (0..calc_count)
-        .into_par_iter()
         .into_par_iter()
         .map(|x| {
             let i = (x) % image_width;
             let j = image_height - ((x - i) / image_width);
             let mut samples: Vec<Vec3> = vec![];
 
-            (0..samples_per_pixel).into_iter().for_each(|s| {
+            (0..samples_per_pixel).into_iter().for_each(|_s| {
                 let u = ((i as f64) + util::random()) / ((image_width - 1) as f64);
                 let v = ((j as f64) + util::random()) / ((image_height - 1) as f64);
 

@@ -1,4 +1,4 @@
-use std::{iter::Sum, ops};
+use std::ops;
 
 use crate::util::{self, random, random_range};
 
@@ -90,8 +90,8 @@ impl Vec3 {
     }
 
     pub fn near_zero(&self) -> bool {
-        const s: f64 = 1e-8;
-        (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
+        const S: f64 = 1e-8;
+        (self.x.abs() < S) && (self.y.abs() < S) && (self.z.abs() < S)
     }
 
     pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
