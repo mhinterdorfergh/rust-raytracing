@@ -7,7 +7,7 @@ pub struct Lambertian {
 impl Material for Lambertian {
     fn scatter(
         &self,
-        ray: &crate::ray::Ray,
+        _ray: &crate::ray::Ray,
         record: crate::hittable::HitRecord,
     ) -> Option<(Vec3, crate::ray::Ray)> {
         // let target = record.point + record.normal + Vec3::random_unit_vector();
