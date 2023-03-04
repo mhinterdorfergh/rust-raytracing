@@ -1,13 +1,13 @@
-use crate::{ray::Ray, util, vec3::Vec3};
+use crate::{ray::Ray, vec3::Vec3};
 
 pub struct Camera {
     pub origin: Vec3,
     pub lower_left_corner: Vec3,
     pub horizontal: Vec3,
     pub vertical: Vec3,
-    pub u: Vec3,
-    pub v: Vec3,
-    pub w: Vec3,
+    pub view_plane_vector_one: Vec3,
+    pub view_plane_vector_2: Vec3,
+    pub view_direction: Vec3,
     pub lens_radius: f64,
 }
 
@@ -15,42 +15,47 @@ impl Camera {
     pub fn new(
         lookfrom: Vec3,
         lookat: Vec3,
-        vup: Vec3,
-        vfov_deg: f64,
+        view_up: Vec3,
+        vertical_field_of_view_deg: f64,
         aspect_ratio: f64,
-        aperture: f64,
-        focus_dist: f64,
+        aperture: f64,   // lens diameter
+        focus_dist: f64, // distance between lens and focus plane
     ) -> Camera {
-        let theta = util::degrees_to_radians(vfov_deg);
-        let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h;
+        let vertical_field_of_view_rad = crate::degrees_to_radians!(vertical_field_of_view_deg); // theta
+        let vfov_distance_ratio = (vertical_field_of_view_rad / 2.0).tan(); // h
+        let viewport_height = 2.0 * vfov_distance_ratio;
         let viewport_width = aspect_ratio * viewport_height;
 
-        let w = Vec3::unit_vector(lookfrom - lookat); // get view direction
-        let u = Vec3::unit_vector(Vec3::cross(vup, w));
-        let v = Vec3::cross(w, u);
+        // use view_up and view_direction to calculate a plane that represents the cameras
+        // orientation in 2D
+        let view_direction = Vec3::unit_vector(lookfrom - lookat); // w
+        let view_plane_vector_1 = Vec3::unit_vector(Vec3::cross(view_up, view_direction)); // u
+        let view_plane_vector_2 = Vec3::cross(view_direction, view_plane_vector_1); // v
 
         Camera {
             origin: lookfrom,
             lower_left_corner: lookfrom
-                - (focus_dist * viewport_width * u) / 2.0
-                - (focus_dist * viewport_height * v) / 2.0
-                - focus_dist * w,
-            horizontal: focus_dist * viewport_width * u,
-            vertical: focus_dist * viewport_height * v,
-            u,
-            v,
-            w,
+                - (focus_dist * viewport_width * view_plane_vector_1) / 2.0
+                - (focus_dist * viewport_height * view_plane_vector_2) / 2.0
+                - focus_dist * view_direction,
+            horizontal: focus_dist * viewport_width * view_plane_vector_1,
+            vertical: focus_dist * viewport_height * view_plane_vector_2,
+            view_plane_vector_one: view_plane_vector_1,
+            view_plane_vector_2,
+            view_direction,
             lens_radius: aperture / 2.0,
         }
     }
 
-    pub fn shoot_ray(&self, s: f64, t: f64) -> Ray {
-        let rd = self.lens_radius * Vec3::random_in_unit_disk();
-        let offset = self.u * rd.x + self.v * rd.y;
+    pub fn shoot_ray(&self, viewport_x: f64, viewport_y: f64) -> Ray {
+        let random_xy_plane_offset = self.lens_radius * Vec3::random_in_unit_disk();
+        let offset_vector = self.view_plane_vector_one * random_xy_plane_offset.x
+            + self.view_plane_vector_2 * random_xy_plane_offset.y;
+        let viewport_target =
+            self.lower_left_corner + viewport_x * self.horizontal + viewport_y * self.vertical;
         Ray::new(
-            self.origin + offset,
-            self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
+            self.origin + offset_vector,
+            viewport_target - self.origin - offset_vector,
         )
     }
 }

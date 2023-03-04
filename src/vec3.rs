@@ -21,6 +21,14 @@ impl Vec3 {
         }
     }
 
+    pub fn pow(&self, exponent: f64) -> Vec3 {
+        Vec3 {
+            x: self.x.powf(exponent),
+            y: self.y.powf(exponent),
+            z: self.z.powf(exponent),
+        }
+    }
+
     pub fn negate(&self) -> Vec3 {
         Vec3 {
             x: self.x * -1.0,

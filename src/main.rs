@@ -22,14 +22,16 @@ use vec3::Vec3;
 
 use crate::{hittable::HittableList, ray::Ray};
 
-fn ray_color(ray: &Ray, world: &hittable::HittableList, depth: u32) -> Vec3 {
-    if depth <= 0 {
+fn ray_color(ray: &Ray, hittable_list: &hittable::HittableList, max_depth: u32) -> Vec3 {
+    if max_depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
 
-    match world.hit(&ray, 0.001, INFTY) {
-        Some(record) => match record.material.scatter(ray, record) {
-            Some((color, scattered_ray)) => color * ray_color(&scattered_ray, world, depth - 1),
+    match hittable_list.hit(&ray, 0.001, INFTY) {
+        Some(hit_record) => match hit_record.material.scatter(ray, hit_record) {
+            Some((color, scattered_ray)) => {
+                color * ray_color(&scattered_ray, hittable_list, max_depth - 1)
+            }
             None => Vec3::new(0.0, 0.0, 0.0),
         },
         None => {
@@ -86,7 +88,7 @@ fn random_scene<'a>() -> HittableList {
                 world.add(Sphere {
                     center,
                     radius: 0.2,
-                    material: material,
+                    material,
                 });
             }
         }
@@ -137,48 +139,43 @@ fn random_scene<'a>() -> HittableList {
 }
 
 fn main() {
-    /*
-     * PPM File:
-     * P3
-     * <image_width> <image_height>
-     * <max_color=255>
-     * r g b  r g b  ...  r g b
-     * ...
-     * r g b  r g b  ...  r g b
-     */
-
     // io
-    let file = OpenOptions::new()
+    let output_file = OpenOptions::new()
         .write(true)
         .create(true)
         .open("image.ppm")
         .expect("Unable to open file");
-    let mut writer = BufWriter::new(file);
+    let mut output_writer = BufWriter::new(output_file);
 
     // init logging
     dotenv::dotenv().ok();
     env_logger::init();
 
-    // Image
-    let aspect_ratio = 3.0 / 2.0;
-    let image_width: u32 = 1200;
-    let image_height: u32 = ((image_width as f64) / aspect_ratio).round() as u32;
-    let samples_per_pixel: u32 = 1000;
-    let max_bounce: u32 = 12;
+    // constants
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: u32 = 320;
+    const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
+    const SAMPLES_PER_PIXEL: u32 = 10;
+    const MAX_BOUNCE: u32 = 12;
+    const FIELD_OF_VIEW: f64 = 20.0;
+    const CALC_COUNT: u32 = IMAGE_HEIGHT * IMAGE_WIDTH;
+    const GAMMA: f64 = 2.0;
 
     // Camera
-    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    let lookat = Vec3::new(0.0, 0.0, 0.0);
-    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let lookfrom = Vec3::new(13.0, 2.0, 3.0); // position of the camera
+    let lookat = Vec3::new(0.0, 0.0, 0.0); // the position the camera looks at
+    let view_up = Vec3::new(0.0, 1.0, 0.0); // tilt of the camera
+                                            // dist_to_focus & aperture are used for defocus blur or depth of field
+                                            // the higher the dist_to_focus and the lower the aperture ... the smaller is the sharp area
     let dist_to_focus = 10.0;
     let aperture = 0.1;
 
     let camera = camera::Camera::new(
         lookfrom,
         lookat,
-        vup,
-        20.0,
-        aspect_ratio,
+        view_up,
+        FIELD_OF_VIEW,
+        ASPECT_RATIO,
         aperture,
         dist_to_focus,
     );
@@ -186,51 +183,43 @@ fn main() {
     // world
     let world = random_scene();
     // print header
-    writer
+    output_writer
         .write_all(
             format!(
                 r###"P3
 {image_width} {image_height}
 {max_color}
 "###,
-                image_width = image_width,
-                image_height = image_height,
+                image_width = IMAGE_WIDTH,
+                image_height = IMAGE_HEIGHT,
                 max_color = 255,
             )
             .as_bytes(),
         )
         .expect("Unable to write data");
 
-    let calc_count = image_height * image_width;
-
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(12)
-        .build_global()
-        .expect("Could not create threadpool");
-
-    let pixels: Vec<Vec3> = (0..calc_count)
+    let pixels: Vec<Vec3> = (0..CALC_COUNT)
         .into_par_iter()
         .map(|x| {
-            let i = (x) % image_width;
-            let j = image_height - ((x - i) / image_width);
-            let mut samples: Vec<Vec3> = vec![];
-
-            (0..samples_per_pixel).into_iter().for_each(|_s| {
-                let u = ((i as f64) + util::random()) / ((image_width - 1) as f64);
-                let v = ((j as f64) + util::random()) / ((image_height - 1) as f64);
-
-                let ray = camera.shoot_ray(u, v);
-
-                samples.push(ray_color(&ray, &world, max_bounce));
-            });
-
-            samples
+            let i = (x) % IMAGE_WIDTH;
+            let j = IMAGE_HEIGHT - ((x - i) / IMAGE_WIDTH);
+            ((0..SAMPLES_PER_PIXEL)
                 .into_par_iter()
+                .map(|_s| {
+                    let u = ((i as f64) + util::random()) / ((IMAGE_WIDTH - 1) as f64);
+                    let v = ((j as f64) + util::random()) / ((IMAGE_HEIGHT - 1) as f64);
+
+                    let ray = camera.shoot_ray(u, v);
+
+                    ray_color(&ray, &world, MAX_BOUNCE)
+                })
                 .reduce(|| Vec3::default(), |a, b| a + b)
+                / SAMPLES_PER_PIXEL as f64) // calc average pixel value
+                .pow(1.0 / GAMMA) // gamma correction
         })
         .collect();
 
     pixels
         .into_iter()
-        .for_each(|p| write_color(&mut writer, p, samples_per_pixel))
+        .for_each(|pixel_value| write_color(&mut output_writer, pixel_value))
 }

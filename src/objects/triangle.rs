@@ -1,7 +1,6 @@
 use crate::{
     hittable::{HitRecord, Hittable},
     material::Material,
-    util::{self, clamp},
     vec3::Vec3,
 };
 
