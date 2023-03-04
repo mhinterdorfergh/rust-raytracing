@@ -14,12 +14,12 @@ impl Material for Metal {
         // let target = record.point + record.normal + Vec3::random_unit_vector();
         // let target = record.point + record.normal + Vec3::random_in_unit_sphere();
 
-        let reflected = Vec3::reflect(Vec3::unit_vector(ray.direction), record.normal);
+        let reflected = Vec3::reflect(&Vec3::unit_vector(&ray.direction), &record.normal);
         let scattered = Ray::new(
             record.point,
             reflected + self.fuzz * Vec3::random_in_unit_sphere(),
         );
-        if Vec3::dot(scattered.direction, record.normal) > 0.0 {
+        if Vec3::dot(&scattered.direction, &record.normal) > 0.0 {
             Some((self.color, scattered))
         } else {
             None

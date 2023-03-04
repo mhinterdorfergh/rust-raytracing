@@ -1,14 +1,14 @@
 use crate::{ray::Ray, vec3::Vec3};
 
 pub struct Camera {
-    pub origin: Vec3,
-    pub lower_left_corner: Vec3,
-    pub horizontal: Vec3,
-    pub vertical: Vec3,
-    pub view_plane_vector_one: Vec3,
-    pub view_plane_vector_2: Vec3,
-    pub view_direction: Vec3,
-    pub lens_radius: f64,
+    origin: Vec3,
+    lower_left_corner: Vec3,
+    horizontal: Vec3,
+    vertical: Vec3,
+    view_plane_vector_one: Vec3,
+    view_plane_vector_2: Vec3,
+    view_direction: Vec3,
+    lens_radius: f64,
 }
 
 impl Default for Camera {
@@ -54,9 +54,9 @@ impl Camera {
 
         // use view_up and view_direction to calculate a plane that represents the cameras
         // orientation in 2D
-        let view_direction = Vec3::unit_vector(lookfrom - lookat); // w
-        let view_plane_vector_1 = Vec3::unit_vector(Vec3::cross(view_up, view_direction)); // u
-        let view_plane_vector_2 = Vec3::cross(view_direction, view_plane_vector_1); // v
+        let view_direction = Vec3::unit_vector(&(lookfrom - lookat)); // w
+        let view_plane_vector_1 = Vec3::unit_vector(&Vec3::cross(&view_up, &view_direction)); // u
+        let view_plane_vector_2 = Vec3::cross(&view_direction, &view_plane_vector_1); // v
 
         Camera {
             origin: lookfrom,

@@ -15,7 +15,7 @@ impl Triangle {
     fn get_surface_normal(&self) -> Vec3 {
         let ab = self.b - self.a;
         let ac = self.c - self.a;
-        Vec3::cross(ab, ac)
+        Vec3::cross(&ab, &ac)
     }
 }
 
@@ -30,8 +30,8 @@ impl Hittable for Triangle {
         let ab = self.b - self.a;
         let ac = self.c - self.a;
 
-        let plane_vector = Vec3::cross(ray.direction, ac);
-        let determinant = Vec3::dot(ab, plane_vector);
+        let plane_vector = Vec3::cross(&ray.direction, &ac);
+        let determinant = Vec3::dot(&ab, &plane_vector);
 
         if determinant.abs() < EPSILON {
             return None;
@@ -39,24 +39,24 @@ impl Hittable for Triangle {
 
         let inverse_determinant = 1.0 / determinant;
         let t_vector = ray.origin - self.a;
-        let u = inverse_determinant * Vec3::dot(t_vector, plane_vector);
+        let u = inverse_determinant * Vec3::dot(&t_vector, &plane_vector);
 
         if u < -EPSILON || u > 1.0 + EPSILON {
             return None;
         }
-        let q_vector = Vec3::cross(t_vector, ab);
-        let v = inverse_determinant * Vec3::dot(ray.direction, q_vector);
+        let q_vector = Vec3::cross(&t_vector, &ab);
+        let v = inverse_determinant * Vec3::dot(&ray.direction, &q_vector);
 
         if v < -EPSILON || u + v > 1.0 {
             return None;
         }
 
-        let t = inverse_determinant * Vec3::dot(ac, q_vector);
+        let t = inverse_determinant * Vec3::dot(&ac, &q_vector);
         if t > EPSILON && t < t_max && t > t_min {
             Some(HitRecord {
                 point: ray.at(t),
                 normal: self.get_surface_normal(),
-                t: t,
+                t,
                 front_face: false,
                 material: &self.material,
             })
