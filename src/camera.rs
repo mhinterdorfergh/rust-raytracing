@@ -11,6 +11,32 @@ pub struct Camera {
     pub lens_radius: f64,
 }
 
+impl Default for Camera {
+    fn default() -> Self {
+        Camera::new(
+            Vec3 {
+                x: 0.0,
+                y: 1.0,
+                z: 10.0,
+            },
+            Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            Vec3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
+            20.0,
+            16.0 / 9.0,
+            0.1,
+            10.0,
+        )
+    }
+}
+
 impl Camera {
     pub fn new(
         lookfrom: Vec3,
@@ -54,8 +80,8 @@ impl Camera {
         let viewport_target =
             self.lower_left_corner + viewport_x * self.horizontal + viewport_y * self.vertical;
         Ray::new(
-            self.origin + offset_vector,
-            viewport_target - self.origin - offset_vector,
+            self.origin + offset_vector,                   // ray origin
+            viewport_target - self.origin - offset_vector, // ray direction
         )
     }
 }
