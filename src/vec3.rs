@@ -100,24 +100,33 @@ impl Vec3 {
         *vector - 2.0 * Self::dot(&vector, &surface_normal) * *surface_normal
     }
 
-    pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
-        let cos_theta = Vec3::dot(&(*uv * -1.0), &n).min(1.0);
-        let r_out_perp = etai_over_etat * (*uv + cos_theta * *n);
-        let r_out_parallel = ((1.0 - r_out_perp.length_squared()).abs()).sqrt() * *n * -1.0;
+    pub fn refract(ray_direction: &Vec3, surface_normal: &Vec3, refraction_ratio: f64) -> Vec3 {
+
+        // get unit_vectors for ray and normal
+        let ray_direction_uv = Self::unit_vector(ray_direction);
+        let surface_normal_uv = Self::unit_vector(surface_normal);
+        let reverse_ray_uv = ray_direction_uv * -1.0;
+
+        // get the angle theta between ray and surface_normal
+        let cos_theta = Vec3::dot(&reverse_ray_uv, &surface_normal_uv).min(1.0);
+
+        // get both parts of refracted ray according to SNELL
+        let r_out_perp = refraction_ratio * (ray_direction_uv + cos_theta * surface_normal_uv);
+        let r_out_parallel = surface_normal_uv * -1.0 * (1.0-r_out_perp.length_squared()).abs();
         r_out_parallel + r_out_perp
     }
 
     pub fn random_in_unit_disk() -> Vec3 {
         loop {
-            let p = Vec3::new(
+            let probant_vector = Vec3::new(
                 util::random_range(-1.0, 1.0),
                 util::random_range(-1.0, 1.0),
                 0.0,
             );
-            if p.length_squared() >= 1.0 {
+            if probant_vector.length_squared() >= 1.0 {
                 continue;
             } else {
-                return p;
+                return probant_vector;
             }
         }
     }
