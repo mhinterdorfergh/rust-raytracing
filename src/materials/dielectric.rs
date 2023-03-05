@@ -8,7 +8,7 @@ impl Material for Dielectric {
     fn scatter(
         &self,
         ray: &crate::ray::Ray,
-        record: crate::hittable::HitRecord,
+        record: &crate::hittable::HitRecord,
     ) -> Option<(crate::vec3::Vec3, crate::ray::Ray)> {
         let refraction_ratio = if record.front_face {
             1.0 / self.index_of_refraction

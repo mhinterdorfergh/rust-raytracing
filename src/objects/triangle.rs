@@ -56,7 +56,7 @@ impl Hittable for Triangle {
             Some(HitRecord {
                 point: ray.at(t),
                 normal: self.get_surface_normal(),
-                t,
+                distance: t,
                 front_face: false,
                 material: &self.material,
             })

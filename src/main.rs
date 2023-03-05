@@ -28,9 +28,9 @@ fn ray_color(ray: &Ray, hittable_list: &hittable::HittableList, max_depth: u32) 
     }
 
     match hittable_list.hit(&ray, 0.001, INFTY) {
-        Some(hit_record) => match hit_record.material.scatter(ray, hit_record) {
+        Some(hit_record) => match hit_record.material.scatter(&ray, &hit_record) {
             Some((color, scattered_ray)) => {
-                color * ray_color(&scattered_ray, hittable_list, max_depth - 1)
+                color * ray_color(&scattered_ray, &hittable_list, max_depth - 1)
             }
             None => Vec3::new(0.0, 0.0, 0.0),
         },
@@ -155,7 +155,7 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u32 = 320;
     const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 10;
+    const SAMPLES_PER_PIXEL: u32 = 100;
     const MAX_BOUNCE: u32 = 12;
     const FIELD_OF_VIEW: f64 = 20.0;
     const CALC_COUNT: u32 = IMAGE_HEIGHT * IMAGE_WIDTH;

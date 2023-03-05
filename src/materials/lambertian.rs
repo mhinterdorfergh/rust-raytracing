@@ -8,7 +8,7 @@ impl Material for Lambertian {
     fn scatter(
         &self,
         _ray: &crate::ray::Ray,
-        record: crate::hittable::HitRecord,
+        record: &crate::hittable::HitRecord,
     ) -> Option<(Vec3, crate::ray::Ray)> {
         // let target = record.point + record.normal + Vec3::random_unit_vector();
         // let target = record.point + record.normal + Vec3::random_in_unit_sphere();
