@@ -31,8 +31,8 @@ impl Hittable for Sphere {
         }
         let root = (b * b - a * c).sqrt();
 
-        let t_plus = (-b + root)/a;
-        let t_minus = (-b - root)/a;
+        let t_plus = (-b + root) / a;
+        let t_minus = (-b - root) / a;
 
         let t = if t_minus >= t_min && t_minus <= t_max {
             t_minus

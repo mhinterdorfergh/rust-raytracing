@@ -156,7 +156,7 @@ fn main() {
     const IMAGE_WIDTH: u32 = 320;
     const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
     const SAMPLES_PER_PIXEL: u32 = 100;
-    const MAX_BOUNCE: u32 = 12;
+    const MAX_BOUNCE: u32 = 50;
     const FIELD_OF_VIEW: f64 = 20.0;
     const CALC_COUNT: u32 = IMAGE_HEIGHT * IMAGE_WIDTH;
     const GAMMA: f64 = 2.0;

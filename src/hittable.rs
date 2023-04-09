@@ -3,7 +3,7 @@ use crate::{material::Material, ray::Ray, vec3::Vec3};
 pub struct HitRecord<'a> {
     pub point: Vec3,      // where is it hit
     pub normal: Vec3,     // where does it point
-    pub distance: f64,           // distance
+    pub distance: f64,    // distance
     pub front_face: bool, // does the hit come from a ray facing in or out the object
     pub material: &'a Box<dyn Material>,
 }

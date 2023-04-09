@@ -44,3 +44,35 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
         x
     }
 }
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn clamp_inbound() {
+        assert_eq!(clamp(4.2, 0.0, 10.0), 4.2);
+    }
+    #[test]
+    fn clamp_lower() {
+        assert_eq!(clamp(-1.0, 0.0, 10.0), 0.0);
+    }
+    #[test]
+    fn clamp_higher() {
+        assert_eq!(clamp(69.42, 0.0, 10.0), 10.0);
+    }
+    #[test]
+    fn clamp_higher_bound() {
+        assert_eq!(clamp(10.00001, 0.0, 10.0), 10.0);
+    }
+    #[test]
+    fn clamp_lower_bound() {
+        assert_eq!(clamp(-0.00001, 0.0, 10.0), 0.0);
+    }
+    #[test]
+    fn deg_to_rad() {
+        assert_eq!(degrees_to_radians!(180.0), PI);
+    }
+    #[test]
+    fn deg_to_rad_round() {
+        assert_eq!(degrees_to_radians!(180.0), PI);
+    }
+}

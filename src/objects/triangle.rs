@@ -1,14 +1,15 @@
 use crate::{
     hittable::{HitRecord, Hittable},
     material::Material,
+    ray::Ray,
     vec3::Vec3,
 };
 
 pub struct Triangle {
-    pub a: Vec3,
-    pub b: Vec3,
-    pub c: Vec3,
-    pub material: Box<dyn Material>,
+    a: Vec3,
+    b: Vec3,
+    c: Vec3,
+    material: Box<dyn Material>,
 }
 
 impl Triangle {
@@ -20,12 +21,7 @@ impl Triangle {
 }
 
 impl Hittable for Triangle {
-    fn hit(
-        &self,
-        ray: &crate::ray::Ray,
-        t_min: f64,
-        t_max: f64,
-    ) -> Option<crate::hittable::HitRecord> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         const EPSILON: f64 = 0.0000001;
         let ab = self.b - self.a;
         let ac = self.c - self.a;

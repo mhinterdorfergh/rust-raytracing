@@ -1,4 +1,4 @@
-use crate::{material::Material, ray::Ray, vec3::Vec3};
+use crate::{hittable::HitRecord, material::Material, ray::Ray, vec3::Vec3};
 
 pub struct Metal {
     pub color: Vec3,
@@ -6,11 +6,7 @@ pub struct Metal {
 }
 
 impl Material for Metal {
-    fn scatter(
-        &self,
-        ray: &crate::ray::Ray,
-        record: &crate::hittable::HitRecord,
-    ) -> Option<(Vec3, crate::ray::Ray)> {
+    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<(Vec3, Ray)> {
         // let target = record.point + record.normal + Vec3::random_unit_vector();
         // let target = record.point + record.normal + Vec3::random_in_unit_sphere();
 
