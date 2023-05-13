@@ -8,7 +8,7 @@ impl Material for Dielectric {
     fn scatter(
         &self,
         ray: &crate::ray::Ray,
-        record: crate::hittable::HitRecord,
+        record: &crate::hittable::HitRecord,
     ) -> Option<(crate::vec3::Vec3, crate::ray::Ray)> {
         let refraction_ratio = if record.front_face {
             1.0 / self.index_of_refraction
@@ -16,17 +16,17 @@ impl Material for Dielectric {
             self.index_of_refraction
         };
 
-        let unit_direction = Vec3::unit_vector(ray.direction);
+        let unit_direction = Vec3::unit_vector(&ray.direction);
 
-        let cos_theta = Vec3::dot(unit_direction * -1.0, record.normal).min(1.0);
+        let cos_theta = Vec3::dot(&(unit_direction * -1.0), &record.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let direction = if (refraction_ratio * sin_theta) > 1.0
             || Self::reflectance(cos_theta, refraction_ratio) > random()
         {
-            Vec3::reflect(unit_direction, record.normal)
+            Vec3::reflect(&unit_direction, &record.normal)
         } else {
-            Vec3::refract(unit_direction, record.normal, refraction_ratio)
+            Vec3::refract(&unit_direction, &record.normal, refraction_ratio)
         };
 
         let scattered = Ray::new(record.point, direction);
