@@ -11,8 +11,15 @@ pub struct Triangle {
     c: Vec3,
     material: Box<dyn Material>,
 }
-
 impl Triangle {
+    pub fn new(a: Vec3, b: Vec3, c: Vec3, material: impl Material + 'static) -> Triangle {
+        Triangle {
+            a,
+            b,
+            c,
+            material: Box::new(material),
+        }
+    }
     fn get_surface_normal(&self) -> Vec3 {
         let ab = self.b - self.a;
         let ac = self.c - self.a;

@@ -11,9 +11,9 @@ pub mod material;
 pub mod materials;
 pub mod objects;
 pub mod ray;
+pub mod scenes;
 pub mod util;
 pub mod vec3;
-
 pub fn render_scene(
     scene: &HittableList,
     camera: &Camera,

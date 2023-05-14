@@ -7,14 +7,16 @@ use lib_raytracing::{
     materials::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal},
     objects::sphere::Sphere,
     render_scene,
+    scenes::{
+        loader::Loader,
+        objloader::{self, OBJLoader},
+    },
     util::{self, clamp},
     vec3::Vec3,
 };
 use log::info;
 use pixels::{Pixels, SurfaceTexture};
-use rayon::prelude::{
-    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
-};
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use winit::{
     dpi::LogicalSize,
     event::{Event, VirtualKeyCode},
@@ -125,7 +127,7 @@ fn main() {
 
     // constants
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u32 = 1920;
+    const IMAGE_WIDTH: u32 = 1080;
     const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
     const SAMPLES_PER_PIXEL: u32 = 100;
     const MAX_BOUNCE: u32 = 50;
@@ -152,7 +154,8 @@ fn main() {
     );
 
     // world
-    let world = random_scene();
+    let loader = OBJLoader {};
+    let world = loader.load_file("test.obj"); //random_scene();
 
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
