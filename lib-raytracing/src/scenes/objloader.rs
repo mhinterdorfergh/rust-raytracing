@@ -35,7 +35,7 @@ fn parse_face(parts: &[&str], vertices: &[Vec3], scene: &mut HittableList) {
         .skip(1)
         .map(|p| if let Ok(value) = p.parse() { value } else { 0 })
         .collect();
-    let root = vertices[indices[0]];
+    let root = vertices[indices[0] - 1];
     indices.windows(2).skip(1).for_each(|window| {
         scene.add(Triangle::new(
             root,
