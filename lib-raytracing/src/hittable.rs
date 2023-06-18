@@ -5,7 +5,7 @@ pub struct HitRecord<'a> {
     pub normal: Vec3,     // where does it point
     pub distance: f64,    // distance
     pub front_face: bool, // does the hit come from a ray facing in or out the object
-    pub material: &'a Box<dyn Material>,
+    pub material: &'a dyn Material,
 }
 
 impl HitRecord<'_> {
@@ -19,7 +19,7 @@ impl HitRecord<'_> {
     }
 }
 
-pub trait Hittable: Sync {
+pub trait Hittable: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
@@ -34,6 +34,9 @@ impl HittableList {
 
     pub fn add(&mut self, object: impl Hittable + 'static) {
         self.objects.push(Box::new(object))
+    }
+    pub fn add_box(&mut self, object: Box<dyn Hittable>) {
+        self.objects.push(object);
     }
 }
 

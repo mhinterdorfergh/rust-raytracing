@@ -1,5 +1,6 @@
 use crate::{material::Material, ray::Ray, util::random, vec3::Vec3};
 
+#[derive(Clone, Copy)]
 pub struct Dielectric {
     pub index_of_refraction: f64,
 }

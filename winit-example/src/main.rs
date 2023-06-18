@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
 use lib_raytracing::{
     camera::Camera,
@@ -7,10 +7,7 @@ use lib_raytracing::{
     materials::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal},
     objects::sphere::Sphere,
     render_scene,
-    scenes::{
-        loader::Loader,
-        objloader::{self, OBJLoader},
-    },
+    scenes::load_scene,
     util::{self, clamp},
     vec3::Vec3,
 };
@@ -40,7 +37,7 @@ fn random_scene<'a>() -> HittableList {
             y: -1000.0,
             z: 0.0,
         },
-        material: Box::new(ground_material),
+        material: Arc::new(ground_material),
         radius: 1000.0,
     });
 
@@ -53,17 +50,17 @@ fn random_scene<'a>() -> HittableList {
                 (b as f64) + 0.9 * util::random(),
             );
             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let material: Box<dyn Material> = if choose_mat < 0.8 {
-                    Box::new(Lambertian {
+                let material: Arc<dyn Material> = if choose_mat < 0.8 {
+                    Arc::new(Lambertian {
                         color: Vec3::random() * Vec3::random(),
                     })
                 } else if choose_mat < 0.95 {
-                    Box::new(Metal {
+                    Arc::new(Metal {
                         color: Vec3::random_range(0.5, 1.0),
                         fuzz: util::random_range(0.0, 0.5),
                     })
                 } else {
-                    Box::new(Dielectric {
+                    Arc::new(Dielectric {
                         index_of_refraction: 1.5,
                     })
                 };
@@ -81,7 +78,7 @@ fn random_scene<'a>() -> HittableList {
             y: 1.0,
             z: 0.0,
         },
-        material: Box::new(Dielectric {
+        material: Arc::new(Dielectric {
             index_of_refraction: 1.5,
         }),
         radius: 1.0,
@@ -92,7 +89,7 @@ fn random_scene<'a>() -> HittableList {
             y: 1.0,
             z: 0.0,
         },
-        material: Box::new(Lambertian {
+        material: Arc::new(Lambertian {
             color: Vec3 {
                 x: 0.4,
                 y: 0.2,
@@ -107,7 +104,7 @@ fn random_scene<'a>() -> HittableList {
             y: 1.0,
             z: 0.0,
         },
-        material: Box::new(Metal {
+        material: Arc::new(Metal {
             color: Vec3 {
                 x: 0.7,
                 y: 0.6,
@@ -135,7 +132,7 @@ fn main() {
     const GAMMA: f64 = 2.0;
 
     // Camera
-    let lookfrom = Vec3::new(13.0, 2.0, 3.0); // position of the camera
+    let lookfrom = Vec3::new(13.0, 0.0, 3.0); // position of the camera
     let lookat = Vec3::new(0.0, 0.0, 0.0); // the position the camera looks at
     let view_up = Vec3::new(0.0, 1.0, 0.0); // tilt of the camera
                                             // dist_to_focus & aperture are used for defocus blur or depth of field
@@ -154,8 +151,8 @@ fn main() {
     );
 
     // world
-    let loader = OBJLoader {};
-    let world = loader.load_file("test.obj"); //random_scene();
+    let world = load_scene("DeadTree.obj");
+    //random_scene();
 
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();

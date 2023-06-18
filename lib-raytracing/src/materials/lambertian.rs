@@ -1,5 +1,5 @@
 use crate::{material::Material, ray::Ray, vec3::Vec3};
-
+#[derive(Clone, Copy)]
 pub struct Lambertian {
     pub color: Vec3,
 }

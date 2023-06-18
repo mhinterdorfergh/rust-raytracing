@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     hittable::{HitRecord, Hittable},
     material::Material,
@@ -6,20 +8,12 @@ use crate::{
 };
 
 pub struct Triangle {
-    a: Vec3,
-    b: Vec3,
-    c: Vec3,
-    material: Box<dyn Material>,
+    pub a: Vec3,
+    pub b: Vec3,
+    pub c: Vec3,
+    pub material: Arc<dyn Material>,
 }
 impl Triangle {
-    pub fn new(a: Vec3, b: Vec3, c: Vec3, material: impl Material + 'static) -> Triangle {
-        Triangle {
-            a,
-            b,
-            c,
-            material: Box::new(material),
-        }
-    }
     fn get_surface_normal(&self) -> Vec3 {
         let ab = self.b - self.a;
         let ac = self.c - self.a;
@@ -61,7 +55,7 @@ impl Hittable for Triangle {
                 normal: self.get_surface_normal(),
                 distance: t,
                 front_face: false,
-                material: &self.material,
+                material: &*self.material,
             })
         } else {
             None

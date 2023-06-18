@@ -1,5 +1,5 @@
 use crate::{hittable::HitRecord, material::Material, ray::Ray, vec3::Vec3};
-
+#[derive(Clone, Copy)]
 pub struct Metal {
     pub color: Vec3,
     pub fuzz: f64,

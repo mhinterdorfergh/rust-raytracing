@@ -1,62 +1,73 @@
+use std::sync::Arc;
+
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use tobj::Model;
+
 use crate::{
-    hittable::HittableList, materials::lambertian::Lambertian, objects::triangle::Triangle,
+    hittable::{Hittable, HittableList},
+    material::Material,
+    materials::lambertian::Lambertian,
+    objects::triangle::Triangle,
     vec3::Vec3,
 };
 
-use super::loader::{read_lines, Loader};
+const FALLBACK_MATERIAL: Lambertian = Lambertian {
+    color: Vec3 {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+    },
+};
+pub fn load_objects(
+    materials: &Vec<Option<Arc<dyn Material>>>,
+    objects: &Vec<Model>,
+) -> crate::hittable::HittableList {
+    let mut scene: HittableList = Default::default();
 
-pub struct OBJLoader {}
-
-impl Loader for OBJLoader {
-    fn load_file(&self, file_name: &str) -> crate::hittable::HittableList {
-        let mut vertices: Vec<Vec3> = Vec::new();
-        let mut scene: HittableList = Default::default();
-        if let Ok(lines) = read_lines(file_name) {
-            for line in lines {
-                if let Ok(entry) = line {
-                    let parts: Vec<&str> = entry.split(" ").collect();
-                    match parts[0] {
-                        "v" => parse_vec(&parts, &mut vertices),
-                        "f" => parse_face(&parts, &vertices, &mut scene),
-                        _ => continue,
-                    }
-                }
+    scene.objects = objects
+        .par_iter()
+        .map(|object| {
+            let object = &object.mesh;
+            if !object.face_arities.is_empty() {
+                return Vec::new();
             }
-        } else {
-            log::error!("Could not find file");
-        }
-        scene
-    }
-}
-
-fn parse_face(parts: &[&str], vertices: &[Vec3], scene: &mut HittableList) {
-    let indices: Vec<usize> = parts
-        .into_iter()
-        .skip(1)
-        .map(|p| if let Ok(value) = p.parse() { value } else { 0 })
+            let vertices: Vec<Vec3> = object
+                .positions
+                .chunks(3)
+                .map(|chunk| Vec3 {
+                    x: chunk[0].into(),
+                    y: chunk[1].into(),
+                    z: chunk[2].into(),
+                })
+                .collect();
+            let material = match object.material_id {
+                Some(material_id) => match materials[material_id].clone() {
+                    Some(material) => material,
+                    None => {
+                        log::debug!("Using fallback material");
+                        Arc::new(FALLBACK_MATERIAL.clone())
+                    }
+                },
+                None => {
+                    log::debug!("Using fallback material");
+                    Arc::new(FALLBACK_MATERIAL.clone())
+                }
+            };
+            object
+                .indices
+                .chunks(3)
+                .map(|chunk| {
+                    let hittable: Box<dyn Hittable> = Box::new(Triangle {
+                        a: vertices[chunk[0] as usize],
+                        b: vertices[chunk[1] as usize],
+                        c: vertices[chunk[2] as usize],
+                        material: material.clone(),
+                    });
+                    hittable
+                })
+                .collect()
+        })
+        .flatten()
         .collect();
-    let root = vertices[indices[0] - 1];
-    indices.windows(2).skip(1).for_each(|window| {
-        scene.add(Triangle::new(
-            root,
-            vertices[window[0] - 1],
-            vertices[window[1] - 1],
-            Lambertian {
-                color: Vec3::new(0.0, 1.0, 0.0),
-            },
-        ))
-    })
+    scene
 }
-
-fn parse_vec(parts: &[&str], vertices: &mut Vec<Vec3>) {
-    if parts.len() != 4 {
-        log::info!("skipping vertex");
-    }
-    let vec = Vec3::new(
-        parts[1].parse().expect("failed parsing"),
-        parts[2].parse().expect("failed parsing"),
-        parts[3].parse().expect("failed parsing"),
-    );
-    vertices.push(vec);
-}
-
